@@ -22,9 +22,9 @@ public class Chat {
     
     ConnectionFactory factory = new ConnectionFactory();
     //factory.setUri("amqp://huarumck:VncxT9rNIpuDuLcCkfJqne0JWAlKbA0k@otter.rmq.cloudamqp.com/huarumck");
-    factory.setHost("ec2-34-220-41-87.us-west-2.compute.amazonaws.com");
-    factory.setUsername("accelwo");
-    factory.setPassword("meupass");
+    factory.setHost("ec2-54-200-22-72.us-west-2.compute.amazonaws.com");
+    factory.setUsername("accel");
+    factory.setPassword("@Accel27");
     factory.setVirtualHost("/");
     
     //  Cria a conexão e o canal
@@ -81,7 +81,14 @@ public class Chat {
       if (message.equals("!fechar")){
         System.out.println("[*]  ==== Programa Finalizado =======    [*]");
         System.exit(0);
+      //CODIGO NOVO ABAIXO
+      } else {
+        if (message.equals("!addGroup"){
+          String NomeDoGrupo = message.substring(10,message.length());
+          System.out.println("nome do grupo:" + NomeDoGrupo);
+        }
       }
+      
       
       //  Verifica se o texto digitado no terminal é pra selecionar um novo destino
       if (novo_destino){
