@@ -38,6 +38,7 @@ public class Chat {
     //  Cria a conexão e o canal
     Connection connection = factory.newConnection();
     Channel channel = connection.createChannel();
+    Channel channel_f = connection.createChannel();
     
     //  Inicialização do programa
     System.out.print("Usuário: ");
@@ -65,10 +66,11 @@ public class Chat {
     
     
     channel.queueDeclare(user, false, false, false, null);
+    channel_f.queueDeclare(user + "_f", false, false, false, null);
     //System.out.println(" [*] Carregando Mensagens salvas!  [*]");
 
 
-    //Receptor de mensagens
+    //Receptor de mensagens de texto
     Consumer consumer = new DefaultConsumer(channel) {
       /*public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
           throws IOException {
@@ -80,11 +82,6 @@ public class Chat {
         public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
           throws IOException {
             
-          String message = new String(body, "UTF-8");
-          System.out.println("");
-          System.out.println(message);
-          System.out.print(Destino + ">> ");
-          
           msgProto.Mensagem rec_mensagem =  msgProto.Mensagem.parseFrom(body);
           msgProto.Conteudo rec_conteudo = rec_mensagem.getConteudo();
           String r_emissor = rec_mensagem.getEmissor();
@@ -95,31 +92,61 @@ public class Chat {
           String r_bytes   = rec_conteudo.getCorpo().toStringUtf8();
           String r_nome    = rec_conteudo.getNome();
           
-          System.out.println("tipo de dados: " + r_tipo);
-          System.out.println("nome do grupo: " + r_grupo);
-          System.out.println("nome do aquivo: " + r_nome);
+          if (r_grupo.equals("")) {
+            String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + " diz: " + r_bytes;
+            System.out.println("");
+            System.out.println(msg_formatada);
+            System.out.print(Destino + ">> ");
+          } else {
+            String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + "#" + r_grupo + " diz: " + r_bytes;
+            System.out.println("");
+            System.out.println(msg_formatada);
+            System.out.print(Destino + ">> ");
+          }
+        }
+    };
+    
+     //Receptor de mensagens de arquivos
+    Consumer consumer_f = new DefaultConsumer(channel_f) {
+      /*public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+          throws IOException {
+        String message = new String(body, "UTF-8");
+        System.out.println("");
+        System.out.println(message);
+        System.out.print(Destino + ">> ");*/
+        
+        public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+          throws IOException {
+            
+          msgProto.Mensagem rec_mensagem =  msgProto.Mensagem.parseFrom(body);
+          msgProto.Conteudo rec_conteudo = rec_mensagem.getConteudo();
+          
+          System.out.println("RECEBIDA NA FILA _F");
+          String r_emissor = rec_mensagem.getEmissor();
+          String r_data    = rec_mensagem.getData();
+          String r_hora    = rec_mensagem.getHora();
+          String r_grupo   = rec_mensagem.getGrupo();
+          String r_tipo    = rec_conteudo.getTipo();
+          String r_bytes   = rec_conteudo.getCorpo().toStringUtf8();
+          String r_nome    = rec_conteudo.getNome();
           
           if (r_grupo.equals("")) {
             String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + " diz: " + r_bytes;
+            System.out.println("");
             System.out.println(msg_formatada);
+            System.out.print(Destino + ">> ");
           } else {
             String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + "#" + r_grupo + " diz: " + r_bytes;
+            System.out.println("");
             System.out.println(msg_formatada);
-
+            System.out.print(Destino + ">> ");
           }
-          
-          //String msg_formatada =  "(" + rec_mensagem.getData() + " às " + rec_mensagem.getHora() + ") " 
-            //                          + rec_mensagem.getEmissor() + " diz: " + String(rec_conteudo.getData());
-          
-          
-          //System.out.println()
-        
         }
-      
-      
     };
     
     channel.basicConsume(user, true, consumer);
+    channel_f.basicConsume(user + "_f", true, consumer_f);
+    
     
     //  O programa entra em loop infitnito pra o envio de mensagens
     //  para fechar o programa basta digitar #fechar
