@@ -30,6 +30,8 @@ public class Chat {
   public static boolean to_group = false;
 
   public static void main(String[] argv) throws Exception {
+    
+    
     Scanner entrada = new Scanner(System.in);
     
     ConnectionFactory factory = new ConnectionFactory();
@@ -184,9 +186,26 @@ public class Chat {
               System.out.println(tipoMime);
               byte[] bits = Files.readAllBytes(source);
               
+              Thread th = new Thread(new Runnable() {
+                @Override
+                  public void run() {
+                  System.out.println("no thread: " + tipoMime);
+                  System.out.println("msg pre sleep");
+                  try
+                  {
+                       Thread.sleep ((int) (Math.random () * 20000));
+                   }
+                   catch (InterruptedException e)     {
+                     
+                   }
+                  System.out.println("msg pos sleep");
+                  }
+                });
+              
               FileOutputStream fos = new FileOutputStream(new File("imagen.png"));
               fos.write(bits);
               fos.close();
+              th.start();
              // Path path = Paths.get(file.getAbsolutePath());
               //byte[] data = Files.readAllBytes(path);
               
