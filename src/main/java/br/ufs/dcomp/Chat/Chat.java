@@ -4,6 +4,10 @@ import com.rabbitmq.client.*;
 
 import java.io.*;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.spi.FileTypeDetector;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import java.util.*;
 import java.util.Scanner;
@@ -84,6 +88,8 @@ public class Chat {
             
           msgProto.Mensagem rec_mensagem =  msgProto.Mensagem.parseFrom(body);
           msgProto.Conteudo rec_conteudo = rec_mensagem.getConteudo();
+          
+          //System.out.println("RECEBIDA NA FILA Normal");
           String r_emissor = rec_mensagem.getEmissor();
           String r_data    = rec_mensagem.getData();
           String r_hora    = rec_mensagem.getHora();
@@ -91,30 +97,31 @@ public class Chat {
           String r_tipo    = rec_conteudo.getTipo();
           String r_bytes   = rec_conteudo.getCorpo().toStringUtf8();
           String r_nome    = rec_conteudo.getNome();
+          String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor;
           
-          if (r_grupo.equals("")) {
+          if (!r_grupo.equals("")) {
+            /*
             String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + " diz: " + r_bytes;
             System.out.println("");
             System.out.println(msg_formatada);
-            System.out.print(Destino + ">> ");
-          } else {
+            System.out.print(Destino + ">> ");*/
+            msg_formatada = msg_formatada + "#";/*
+          } else {/*
             String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + "#" + r_grupo + " diz: " + r_bytes;
             System.out.println("");
             System.out.println(msg_formatada);
-            System.out.print(Destino + ">> ");
+            System.out.print(Destino + ">> ");*/
           }
+          msg_formatada = msg_formatada + r_grupo + " diz: " + r_bytes;
+          System.out.println("");
+          System.out.println(msg_formatada);
+          System.out.print(Destino + ">> ");
+          
         }
     };
     
-     //Receptor de mensagens de arquivos
-    Consumer consumer_f = new DefaultConsumer(channel_f) {
-      /*public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
-          throws IOException {
-        String message = new String(body, "UTF-8");
-        System.out.println("");
-        System.out.println(message);
-        System.out.print(Destino + ">> ");*/
-        
+     //Receptor de mensagens de arquivos _f
+    Consumer consumer_f = new DefaultConsumer(channel_f) {   
         public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
           throws IOException {
             
@@ -129,18 +136,26 @@ public class Chat {
           String r_tipo    = rec_conteudo.getTipo();
           String r_bytes   = rec_conteudo.getCorpo().toStringUtf8();
           String r_nome    = rec_conteudo.getNome();
+          String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor;
           
-          if (r_grupo.equals("")) {
+          if (!r_grupo.equals("")) {
+            /*
             String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + " diz: " + r_bytes;
             System.out.println("");
             System.out.println(msg_formatada);
-            System.out.print(Destino + ">> ");
-          } else {
+            System.out.print(Destino + ">> ");*/
+            msg_formatada = msg_formatada + "#";/*
+          } else {/*
             String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + "#" + r_grupo + " diz: " + r_bytes;
             System.out.println("");
             System.out.println(msg_formatada);
-            System.out.print(Destino + ">> ");
+            System.out.print(Destino + ">> ");*/
           }
+          msg_formatada = msg_formatada + r_grupo + " diz: " + r_bytes;
+          System.out.println("");
+          System.out.println(msg_formatada);
+          System.out.print(Destino + ">> ");
+          
         }
     };
     
@@ -258,10 +273,29 @@ public class Chat {
           //String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + " diz: " + texto;
           //System.out.println(txt);
           
+          String caminhoAoArquivo = "/home/ubuntu/workspace/sistemas-distribuidos/Chat/arquivos/mistic.png"; 
+          Path source = Paths.get(caminhoAoArquivo);
+          String tipoMime = Files.probeContentType(source);
+          System.out.println(tipoMime);
+          /*Vizualizando o caminho do arquivo
+          final String dir = System.getProperty("user.dir");
+          System.out.println("current dir = " + dir); */
+          msgProto.Conteudo.Builder cnt = msgProto.Conteudo.newBuilder();
+          cnt.setTipo("text/plain");
+          cnt.setCorpo(ByteString.copyFrom(texto.getBytes("UTF-8")));
+          cnt.setNome("");
+            
+          msgProto.Mensagem.Builder msg = msgProto.Mensagem.newBuilder();
+          msg.setEmissor(user);
+          msg.setData(t_data.format(data));
+          msg.setHora(t_hora.format(data));
+          //msg.setGrupo(Destino);
+          msg.setConteudo(cnt);
+          
           if (to_group){
             //Se a mensagem for para um Grupo
             //String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + "#" + Destino + " diz: " + texto;
-            
+            /*
             msgProto.Conteudo.Builder cnt = msgProto.Conteudo.newBuilder();
             cnt.setTipo("text/plain");
             cnt.setCorpo(ByteString.copyFrom(texto.getBytes("UTF-8")));
@@ -272,14 +306,17 @@ public class Chat {
             msg.setData(t_data.format(data));
             msg.setHora(t_hora.format(data));
             msg.setGrupo(Destino);
-            msg.setConteudo(cnt);
+            msg.setConteudo(cnt);*/
+            
+            msg.setGrupo(Destino);
             
             msgProto.Mensagem mensagem = msg.build();
             
             byte[] buffer = mensagem.toByteArray();
             
             channel.basicPublish(Destino, "", null, buffer); 
-          } else {
+          
+          } else {/*
             //Se a mensagem for para um Usuário
             //String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + " diz: " + texto;
            
@@ -294,15 +331,16 @@ public class Chat {
             msg.setHora(t_hora.format(data));
             msg.setGrupo("");
             msg.setConteudo(cnt);
-            
+            */
+            msg.setGrupo("");
             msgProto.Mensagem mensagem = msg.build();
-            
             byte[] buffer = mensagem.toByteArray();
-            
             //channel.basicPublish("", Destino, null, txt.getBytes("UTF-8")); 
             channel.basicPublish("", Destino, null, buffer); 
             
           }
+          
+          
           //channel.basicPublish("", Destino, null, texto.getBytes("UTF-8")); 
         
         
