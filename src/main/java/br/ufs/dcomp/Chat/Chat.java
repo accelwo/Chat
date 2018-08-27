@@ -48,26 +48,7 @@ public class Chat {
     System.out.print("Usuário: ");
     String user = entrada.nextLine();
     System.out.println("Bem vindo " + user);
-    
-    
-    //Testando serializaçao
-    
-    //    COMENTARIO DE SERIALIZACAO
-/*
-  
-    msgProto.Conteudo.builder cnt = msgProto.Conteudo.newBuilder();
-    cnt.setTipoValue("text/plain");
-    cnt.setCorpo(texto.getBytes("UTF-8"));
-    cnt.setNome("teste");
-    
-    
-    msgProto.Mensagem.builder mmsg = msgProto.Mensagem.newBuilder();
-    mmsg.setEmissor("teste");
-    mmsg.setData(data);
-    mmsg.setHora(data);
-    mmsg.setConteudo(cnt);*/
-    
-    
+   
     
     channel.queueDeclare(user, false, false, false, null);
     channel_f.queueDeclare(user + "_f", false, false, false, null);
@@ -76,13 +57,6 @@ public class Chat {
 
     //Receptor de mensagens de texto
     Consumer consumer = new DefaultConsumer(channel) {
-      /*public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
-          throws IOException {
-        String message = new String(body, "UTF-8");
-        System.out.println("");
-        System.out.println(message);
-        System.out.print(Destino + ">> ");*/
-        
         public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
           throws IOException {
             
@@ -100,17 +74,7 @@ public class Chat {
           String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor;
           
           if (!r_grupo.equals("")) {
-            /*
-            String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + " diz: " + r_bytes;
-            System.out.println("");
-            System.out.println(msg_formatada);
-            System.out.print(Destino + ">> ");*/
-            msg_formatada = msg_formatada + "#";/*
-          } else {/*
-            String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + "#" + r_grupo + " diz: " + r_bytes;
-            System.out.println("");
-            System.out.println(msg_formatada);
-            System.out.print(Destino + ">> ");*/
+            msg_formatada = msg_formatada + "#";
           }
           msg_formatada = msg_formatada + r_grupo + " diz: " + r_bytes;
           System.out.println("");
@@ -139,17 +103,7 @@ public class Chat {
           String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor;
           
           if (!r_grupo.equals("")) {
-            /*
-            String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + " diz: " + r_bytes;
-            System.out.println("");
-            System.out.println(msg_formatada);
-            System.out.print(Destino + ">> ");*/
-            msg_formatada = msg_formatada + "#";/*
-          } else {/*
-            String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + "#" + r_grupo + " diz: " + r_bytes;
-            System.out.println("");
-            System.out.println(msg_formatada);
-            System.out.print(Destino + ">> ");*/
+            msg_formatada = msg_formatada + "#";
           }
           msg_formatada = msg_formatada + r_grupo + " diz: " + r_bytes;
           System.out.println("");
@@ -222,6 +176,20 @@ public class Chat {
               
               break;
             case "!upload":
+              String caminhoAoArquivo = "/home/ubuntu/workspace/sistemas-distribuidos/Chat/arquivos/mistic.png"; 
+              String[] separador = caminhoAoArquivo.split("/");
+              String nome_do_arquivo = separador[separador.length - 1];
+              Path source = Paths.get(caminhoAoArquivo);
+              String tipoMime = Files.probeContentType(source);
+              System.out.println(tipoMime);
+              byte[] bits = Files.readAllBytes(source);
+              
+              FileOutputStream fos = new FileOutputStream(new File("imagen.png"));
+              fos.write(bits);
+              fos.close();
+             // Path path = Paths.get(file.getAbsolutePath());
+              //byte[] data = Files.readAllBytes(path);
+              
               break;
             case "!listUsers":
               break;
@@ -236,47 +204,15 @@ public class Chat {
         default : //Aqui que a mensagem é enviada
           System.out.println("Caso DEFAULT");
           Date data = new Date();
-           //NÂO ESTOU CONSEGUINDO SERIALIZAR AS MENSAGENS
-          //SERIALIZANDO MENSAGENS
-          /*
-          msgProto.Conteudo.Builder cnt = msgProto.Conteudo.newBuilder();
-          cnt.setTipo("text/plain");
-          cnt.setCorpo(ByteString.copyFrom(texto.getBytes("UTF-8")));
-          cnt.setNome("");
-          
-          msgProto.Mensagem.Builder msg = msgProto.Mensagem.newBuilder();
-          msg.setEmissor(user);
-          msg.setData(t_data.format(data));
-          msg.setHora(t_hora.format(data));
-          msg.setGrupo("");
-          msg.setConteudo(cnt);
-          
-          msgProto.Mensagem mensagem = msg.build();
-          
-          byte[] buffer = mensagem.toByteArray();*/
-
-          /* CRIAÇÂO DE ARQUIVOS
-          FileOutputStream fos = new FileOutputStream(new File("json.bin"));
-          fos.write(buffer);
-          fos.close();
-          //System.out.println("Contato escrito em formato binário no arquivo \"aluno.bin\"");
-          
-          String json = JsonFormat.printer().print(mensagem);
-          
-          fos = new FileOutputStream(new File("mensagem.json"));
-          fos.write(json.getBytes());
-          fos.close();
-          */
-          
-          
-          //Date data = new Date();
-          //String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + " diz: " + texto;
-          //System.out.println(txt);
-          
+          /*Arquivos
           String caminhoAoArquivo = "/home/ubuntu/workspace/sistemas-distribuidos/Chat/arquivos/mistic.png"; 
+          String[] separador = caminhoAoArquivo.split("/");
+          String nome_do_arquivo = separador[separador.length - 1];
           Path source = Paths.get(caminhoAoArquivo);
           String tipoMime = Files.probeContentType(source);
-          System.out.println(tipoMime);
+          System.out.println(tipoMime);/
+          
+          
           /*Vizualizando o caminho do arquivo
           final String dir = System.getProperty("user.dir");
           System.out.println("current dir = " + dir); */
@@ -293,21 +229,6 @@ public class Chat {
           msg.setConteudo(cnt);
           
           if (to_group){
-            //Se a mensagem for para um Grupo
-            //String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + "#" + Destino + " diz: " + texto;
-            /*
-            msgProto.Conteudo.Builder cnt = msgProto.Conteudo.newBuilder();
-            cnt.setTipo("text/plain");
-            cnt.setCorpo(ByteString.copyFrom(texto.getBytes("UTF-8")));
-            cnt.setNome("");
-            
-            msgProto.Mensagem.Builder msg = msgProto.Mensagem.newBuilder();
-            msg.setEmissor(user);
-            msg.setData(t_data.format(data));
-            msg.setHora(t_hora.format(data));
-            msg.setGrupo(Destino);
-            msg.setConteudo(cnt);*/
-            
             msg.setGrupo(Destino);
             
             msgProto.Mensagem mensagem = msg.build();
@@ -316,93 +237,17 @@ public class Chat {
             
             channel.basicPublish(Destino, "", null, buffer); 
           
-          } else {/*
-            //Se a mensagem for para um Usuário
-            //String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + " diz: " + texto;
-           
-            msgProto.Conteudo.Builder cnt = msgProto.Conteudo.newBuilder();
-            cnt.setTipo("text/plain");
-            cnt.setCorpo(ByteString.copyFrom(texto.getBytes("UTF-8")));
-            cnt.setNome("");
+          } else {
+            msg.setGrupo("");
             
-            msgProto.Mensagem.Builder msg = msgProto.Mensagem.newBuilder();
-            msg.setEmissor(user);
-            msg.setData(t_data.format(data));
-            msg.setHora(t_hora.format(data));
-            msg.setGrupo("");
-            msg.setConteudo(cnt);
-            */
-            msg.setGrupo("");
             msgProto.Mensagem mensagem = msg.build();
             byte[] buffer = mensagem.toByteArray();
             //channel.basicPublish("", Destino, null, txt.getBytes("UTF-8")); 
             channel.basicPublish("", Destino, null, buffer); 
-            
           }
           
-          
-          //channel.basicPublish("", Destino, null, texto.getBytes("UTF-8")); 
-        
-        
           break;
       }
-      
-      /* COMEÇA DAQUI
-      //  Verifica se a mensagem está vazia, caso esteja a subistitui por um " "
-      if (message.length() == 0){
-        message = " ";
-      }
-      
-      //  Verifica o primeiro character da menssagem
-      if (message.substring(0,1).equals("@")){
-        //  Caso seja @ ele separa o texto e marca ele como Destinatário das mensagens
-        Destino = message.substring(1,message.length());
-        novo_destino = true;
-      }
-      
-      
-      //Registra a Data e Hora atual
-      Date data = new Date();
-  
-      //  Adiciona informações de data e usuário á mensagem a ser enviada
-      String texto = sdf.format(data) + user + " diz: " + message; 
-      
-      //  Caso o usuário digite #fechar, finaliza o programa
-      if (message.equals("!fechar")){
-        System.out.println("[*]  ==== Programa Finalizado =======    [*]");
-        System.exit(0);
-      //CODIGO NOVO ABAIXO
-      } else {
-        if (message.equals("!addGroup")){
-          String NomeDoGrupo = message.substring(10,message.length());
-          System.out.println("nome do grupo:" + NomeDoGrupo);
-        }
-      }TERMINA AQUI *
-      /*
-      if (message.substring(0,1).equals("!")){
-        //caracter de comando
-        String[] palavras = 
-      }*/
-      
-      /*PARTE DOIS
-      //  Verifica se o texto digitado no terminal é pra selecionar um novo destino
-      if (novo_destino){
-        //  Se for um novo destinatário, ele não irá enviar mensagem pra ninguem
-        novo_destino = false;
-        
-      } else {
-        //  Verifica se o Destinatário passado é vazio
-        if (!Destino.equals("")){
-          //  Se não for vazio, envia a mensagem
-          channel.basicPublish("", Destino, null, texto.getBytes("UTF-8"));  
-          
-        } else {
-          // Se o destinatário for válido, envia a mensagem
-          System.out.println("[*] Erro: Nenhum destinatario selecionado  [*]");
-          System.out.println("[*] Por favor utilize o comando @nome para [*]");
-          System.out.println("[*] selecionar o destinatario              [*]");
-        }
-      } FIM DOIS */
     }
   }
 }
