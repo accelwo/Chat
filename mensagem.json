@@ -1,9 +1,10 @@
 {
-  "emissor": "accel",
-  "data": "26/08/2018",
-  "hora": "21:40:09",
+  "emissor": "Accel",
+  "data": "27/08/2018",
+  "hora": "10:27:50",
+  "grupo": "Grupo",
   "conteudo": {
     "tipo": "text/plain",
-    "corpo": "dGVzdGU="
+    "corpo": "dGVzdGFuZG8="
   }
 }

@@ -79,30 +79,42 @@ public class Chat {
         
         public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
           throws IOException {
-        String message = new String(body, "UTF-8");
-        System.out.println("");
-        System.out.println(message);
-        System.out.print(Destino + ">> ");
+            
+          String message = new String(body, "UTF-8");
+          System.out.println("");
+          System.out.println(message);
+          System.out.print(Destino + ">> ");
+          
+          msgProto.Mensagem rec_mensagem =  msgProto.Mensagem.parseFrom(body);
+          msgProto.Conteudo rec_conteudo = rec_mensagem.getConteudo();
+          String r_emissor = rec_mensagem.getEmissor();
+          String r_data    = rec_mensagem.getData();
+          String r_hora    = rec_mensagem.getHora();
+          String r_grupo   = rec_mensagem.getGrupo();
+          String r_tipo    = rec_conteudo.getTipo();
+          String r_bytes   = rec_conteudo.getCorpo().toStringUtf8();
+          String r_nome    = rec_conteudo.getNome();
+          
+          System.out.println("tipo de dados: " + r_tipo);
+          System.out.println("nome do grupo: " + r_grupo);
+          System.out.println("nome do aquivo: " + r_nome);
+          
+          if (r_grupo.equals("")) {
+            String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + " diz: " + r_bytes;
+            System.out.println(msg_formatada);
+          } else {
+            String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + "#" + r_grupo + " diz: " + r_bytes;
+            System.out.println(msg_formatada);
+
+          }
+          
+          //String msg_formatada =  "(" + rec_mensagem.getData() + " às " + rec_mensagem.getHora() + ") " 
+            //                          + rec_mensagem.getEmissor() + " diz: " + String(rec_conteudo.getData());
+          
+          
+          //System.out.println()
         
-        msgProto.Mensagem rec_mensagem =  msgProto.Mensagem.parseFrom(body);
-        msgProto.Conteudo rec_conteudo = rec_mensagem.getConteudo();
-        String r_emissor = rec_mensagem.getEmissor();
-        String r_data    = rec_mensagem.getData();
-        String r_hora    = rec_mensagem.getHora();
-        String r_grupo   = rec_mensagem.getGrupo();
-        String r_tipo    = rec_conteudo.getTipo();
-        String r_bytes   = rec_conteudo.getCorpo().toStringUtf8();
-        String r_nome    = rec_conteudo.getNome();
-        
-        String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + " diz: " + r_bytes;
-        
-        //String msg_formatada =  "(" + rec_mensagem.getData() + " às " + rec_mensagem.getHora() + ") " 
-          //                          + rec_mensagem.getEmissor() + " diz: " + String(rec_conteudo.getData());
-        
-        System.out.println("");
-        //System.out.println()
-        
-      }
+        }
       
       
     };
@@ -184,17 +196,11 @@ public class Chat {
           Date data = new Date();
            //NÂO ESTOU CONSEGUINDO SERIALIZAR AS MENSAGENS
           //SERIALIZANDO MENSAGENS
+          /*
           msgProto.Conteudo.Builder cnt = msgProto.Conteudo.newBuilder();
           cnt.setTipo("text/plain");
-          //ByteBuffer temp = ByteBuffer.warp(buf);
-          //ByteString temp = ByteString.copyFrom(tmp);
-          //ByteString temp = ByteString.copyFrom(texto);
-          //ByteString temp = ByteString.copyFrom("teste");
-          //cnt.setCorpo(ByteString.copyFrom(buf));          //cnt.setCorpo();
-          //cnt.setCorpo(texto.getBytes("UTF-8"));
           cnt.setCorpo(ByteString.copyFrom(texto.getBytes("UTF-8")));
           cnt.setNome("");
-          // teste = null;
           
           msgProto.Mensagem.Builder msg = msgProto.Mensagem.newBuilder();
           msg.setEmissor(user);
@@ -205,8 +211,9 @@ public class Chat {
           
           msgProto.Mensagem mensagem = msg.build();
           
-          byte[] buffer = mensagem.toByteArray();
-          
+          byte[] buffer = mensagem.toByteArray();*/
+
+          /* CRIAÇÂO DE ARQUIVOS
           FileOutputStream fos = new FileOutputStream(new File("json.bin"));
           fos.write(buffer);
           fos.close();
@@ -217,6 +224,7 @@ public class Chat {
           fos = new FileOutputStream(new File("mensagem.json"));
           fos.write(json.getBytes());
           fos.close();
+          */
           
           
           //Date data = new Date();
@@ -225,12 +233,29 @@ public class Chat {
           
           if (to_group){
             //Se a mensagem for para um Grupo
-            String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + "#" + Destino + " diz: " + texto;
-            channel.basicPublish(Destino, "", null, txt.getBytes("UTF-8")); 
+            //String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + "#" + Destino + " diz: " + texto;
+            
+            msgProto.Conteudo.Builder cnt = msgProto.Conteudo.newBuilder();
+            cnt.setTipo("text/plain");
+            cnt.setCorpo(ByteString.copyFrom(texto.getBytes("UTF-8")));
+            cnt.setNome("");
+            
+            msgProto.Mensagem.Builder msg = msgProto.Mensagem.newBuilder();
+            msg.setEmissor(user);
+            msg.setData(t_data.format(data));
+            msg.setHora(t_hora.format(data));
+            msg.setGrupo(Destino);
+            msg.setConteudo(cnt);
+            
+            msgProto.Mensagem mensagem = msg.build();
+            
+            byte[] buffer = mensagem.toByteArray();
+            
+            channel.basicPublish(Destino, "", null, buffer); 
           } else {
             //Se a mensagem for para um Usuário
-            String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + " diz: " + texto;
-            /*
+            //String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + " diz: " + texto;
+           
             msgProto.Conteudo.Builder cnt = msgProto.Conteudo.newBuilder();
             cnt.setTipo("text/plain");
             cnt.setCorpo(ByteString.copyFrom(texto.getBytes("UTF-8")));
@@ -247,7 +272,6 @@ public class Chat {
             
             byte[] buffer = mensagem.toByteArray();
             
-            */
             //channel.basicPublish("", Destino, null, txt.getBytes("UTF-8")); 
             channel.basicPublish("", Destino, null, buffer); 
             
