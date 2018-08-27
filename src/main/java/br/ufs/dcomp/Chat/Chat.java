@@ -2,8 +2,10 @@ package br.ufs.dcomp.Chat;
 
 import com.rabbitmq.client.*;
 
+import java.io.*;
 import java.io.IOException;
 
+import java.util.*;
 import java.util.Scanner;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -68,13 +70,41 @@ public class Chat {
 
     //Receptor de mensagens
     Consumer consumer = new DefaultConsumer(channel) {
-      public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+      /*public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+          throws IOException {
+        String message = new String(body, "UTF-8");
+        System.out.println("");
+        System.out.println(message);
+        System.out.print(Destino + ">> ");*/
+        
+        public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
           throws IOException {
         String message = new String(body, "UTF-8");
         System.out.println("");
         System.out.println(message);
         System.out.print(Destino + ">> ");
+        
+        msgProto.Mensagem rec_mensagem =  msgProto.Mensagem.parseFrom(body);
+        msgProto.Conteudo rec_conteudo = rec_mensagem.getConteudo();
+        String r_emissor = rec_mensagem.getEmissor();
+        String r_data    = rec_mensagem.getData();
+        String r_hora    = rec_mensagem.getHora();
+        String r_grupo   = rec_mensagem.getGrupo();
+        String r_tipo    = rec_conteudo.getTipo();
+        String r_bytes   = rec_conteudo.getCorpo().toStringUtf8();
+        String r_nome    = rec_conteudo.getNome();
+        
+        String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor + " diz: " + r_bytes;
+        
+        //String msg_formatada =  "(" + rec_mensagem.getData() + " às " + rec_mensagem.getHora() + ") " 
+          //                          + rec_mensagem.getEmissor() + " diz: " + String(rec_conteudo.getData());
+        
+        System.out.println("");
+        //System.out.println()
+        
       }
+      
+      
     };
     
     channel.basicConsume(user, true, consumer);
@@ -151,11 +181,11 @@ public class Chat {
           
         default : //Aqui que a mensagem é enviada
           System.out.println("Caso DEFAULT");
+          Date data = new Date();
            //NÂO ESTOU CONSEGUINDO SERIALIZAR AS MENSAGENS
           //SERIALIZANDO MENSAGENS
           msgProto.Conteudo.Builder cnt = msgProto.Conteudo.newBuilder();
           cnt.setTipo("text/plain");
-          Byte[] buf = new Byte[100];
           //ByteBuffer temp = ByteBuffer.warp(buf);
           //ByteString temp = ByteString.copyFrom(tmp);
           //ByteString temp = ByteString.copyFrom(texto);
@@ -165,14 +195,31 @@ public class Chat {
           cnt.setCorpo(ByteString.copyFrom(texto.getBytes("UTF-8")));
           cnt.setNome("");
           // teste = null;
-          /*
-          msgProto.Mensagem.builder msg = msgProto.Mensagem.newBuilder();
+          
+          msgProto.Mensagem.Builder msg = msgProto.Mensagem.newBuilder();
           msg.setEmissor(user);
-          msg.setData();
-          msg.setHora();
+          msg.setData(t_data.format(data));
+          msg.setHora(t_hora.format(data));
           msg.setGrupo("");
-          msg.setConteudo(cnt);*/
-          Date data = new Date();
+          msg.setConteudo(cnt);
+          
+          msgProto.Mensagem mensagem = msg.build();
+          
+          byte[] buffer = mensagem.toByteArray();
+          
+          FileOutputStream fos = new FileOutputStream(new File("json.bin"));
+          fos.write(buffer);
+          fos.close();
+          //System.out.println("Contato escrito em formato binário no arquivo \"aluno.bin\"");
+          
+          String json = JsonFormat.printer().print(mensagem);
+          
+          fos = new FileOutputStream(new File("mensagem.json"));
+          fos.write(json.getBytes());
+          fos.close();
+          
+          
+          //Date data = new Date();
           //String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + " diz: " + texto;
           //System.out.println(txt);
           
@@ -183,7 +230,27 @@ public class Chat {
           } else {
             //Se a mensagem for para um Usuário
             String txt = "(" + t_data.format(data) + " às " + t_hora.format(data) + ") " + user + " diz: " + texto;
-            channel.basicPublish("", Destino, null, txt.getBytes("UTF-8")); 
+            /*
+            msgProto.Conteudo.Builder cnt = msgProto.Conteudo.newBuilder();
+            cnt.setTipo("text/plain");
+            cnt.setCorpo(ByteString.copyFrom(texto.getBytes("UTF-8")));
+            cnt.setNome("");
+            
+            msgProto.Mensagem.Builder msg = msgProto.Mensagem.newBuilder();
+            msg.setEmissor(user);
+            msg.setData(t_data.format(data));
+            msg.setHora(t_hora.format(data));
+            msg.setGrupo("");
+            msg.setConteudo(cnt);
+            
+            msgProto.Mensagem mensagem = msg.build();
+            
+            byte[] buffer = mensagem.toByteArray();
+            
+            */
+            //channel.basicPublish("", Destino, null, txt.getBytes("UTF-8")); 
+            channel.basicPublish("", Destino, null, buffer); 
+            
           }
           //channel.basicPublish("", Destino, null, texto.getBytes("UTF-8")); 
         
