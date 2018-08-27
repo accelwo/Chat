@@ -25,6 +25,13 @@
       </plugin>
     </plugins>
   </build>
+  
+  <properties>
+    <protobuf.version>3.5.1</protobuf.version>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
+  
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -47,5 +54,15 @@
        <artifactId>slf4j-simple</artifactId>
        <version>1.7.25</version>
    </dependency>
+   <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java-util</artifactId>
+      <version>3.5.1</version>
+</dependency>
+   <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java-util</artifactId>
+      <version>3.5.1</version>
+</dependency>
   </dependencies>
 </project>
