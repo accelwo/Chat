@@ -100,17 +100,26 @@ public class Chat {
           String r_hora    = rec_mensagem.getHora();
           String r_grupo   = rec_mensagem.getGrupo();
           String r_tipo    = rec_conteudo.getTipo();
-          String r_bytes   = rec_conteudo.getCorpo().toStringUtf8();
+          byte[] buff = rec_conteudo.getCorpo().toByteArray();
+          //String r_bytes   = rec_conteudo.getCorpo().toStringUtf8();
           String r_nome    = rec_conteudo.getNome();
-          String msg_formatada = "(" + r_data + " às " + r_hora + ") " + r_emissor;
-          
+          String msg_formatada = "(" + r_data + " às " + r_hora + ") Arquivo \"" + r_nome + "\" recebido de @" + r_emissor;
           if (!r_grupo.equals("")) {
-            msg_formatada = msg_formatada + "#";
-          }
-          msg_formatada = msg_formatada + r_grupo + " diz: " + r_bytes;
+            msg_formatada = msg_formatada + "#" + r_grupo;
+          } 
+          //System.out.println("");
+          System.out.println(msg_formatada);
+          System.out.print(Destino + ">> ");
+          //msg_formatada = msg_formatada + r_grupo + " diz: " + r_bytes;
+          /*
           System.out.println("");
           System.out.println(msg_formatada);
           System.out.print(Destino + ">> ");
+          */
+          
+          FileOutputStream fileOS = new FileOutputStream(new File(r_nome));
+          fileOS.write(buff);
+          fileOS.close();
           
         }
     };
@@ -178,37 +187,102 @@ public class Chat {
               
               break;
             case "!upload":
-              String caminhoAoArquivo = "/home/ubuntu/workspace/sistemas-distribuidos/Chat/arquivos/mistic.png"; 
+              // caminhoAoArquivo = "/home/ubuntu/workspace/sistemas-distribuidos/Chat/arquivos/mistic.png"; 
+              String caminhoAoArquivo = corte[1];
               String[] separador = caminhoAoArquivo.split("/");
               String nome_do_arquivo = separador[separador.length - 1];
               Path source = Paths.get(caminhoAoArquivo);
               String tipoMime = Files.probeContentType(source);
-              System.out.println(tipoMime);
-              byte[] bits = Files.readAllBytes(source);
+              //System.out.println(tipoMime);
               
+              //byte[] bits = Files.readAllBytes(source);
+              
+              //Criação de variaveis que vão guardar os valores para previnir a não alteração da váriavel principal
+              //Date th_data = new Date();
+              String th_Destino = Destino+ "_f";
+              String th_user = user;
+              boolean th_toGroup = to_group;
+              
+              
+              //DateFormat th_dia = new SimpleDateFormat("dd/MM/yyyy");
+              //DateFormat th_hora = new SimpleDateFormat("HH:mm:ss");
+              
+              
+              //Thread que vai fazer o envio do arquivo
               Thread th = new Thread(new Runnable() {
                 @Override
                   public void run() {
-                  System.out.println("no thread: " + tipoMime);
-                  System.out.println("msg pre sleep");
-                  try
-                  {
-                       Thread.sleep ((int) (Math.random () * 20000));
-                   }
-                   catch (InterruptedException e)     {
-                     
-                   }
-                  System.out.println("msg pos sleep");
+                    try{
+                      Date th_data = new Date();
+                      DateFormat th_dia = new SimpleDateFormat("dd/MM/yyyy");
+                      DateFormat th_hora = new SimpleDateFormat("HH:mm:ss");
+                      
+                      msgProto.Conteudo.Builder th_cnt = msgProto.Conteudo.newBuilder();
+                      msgProto.Mensagem.Builder th_msg = msgProto.Mensagem.newBuilder();
+                      
+                      byte[] bits = Files.readAllBytes(source);
+                      th_cnt.setTipo(tipoMime);
+                      th_cnt.setCorpo(ByteString.copyFrom(bits));
+                      th_cnt.setNome(nome_do_arquivo);
+                      
+                      th_msg.setEmissor(th_user);
+                      th_msg.setData(th_dia.format(th_data));
+                      th_msg.setHora(th_hora.format(th_data));
+                      //msg.setGrupo(Destino);
+                      th_msg.setConteudo(th_cnt);
+                      
+                      if (th_toGroup){
+                        th_msg.setGrupo(th_Destino);
+                        
+                        msgProto.Mensagem th_mensagem = th_msg.build();
+                        
+                        byte[] th_buffer = th_mensagem.toByteArray();
+                        
+                        channel_f.basicPublish(th_Destino, "", null, th_buffer); 
+                      
+                      } else {
+                        th_msg.setGrupo("");
+                        
+                        msgProto.Mensagem th_mensagem = th_msg.build();
+                        byte[] th_buffer = th_mensagem.toByteArray();
+                        //channel.basicPublish("", Destino, null, txt.getBytes("UTF-8")); 
+                        channel_f.basicPublish("", th_Destino, null, th_buffer); 
+                      }
+                    } catch (IOException e){
+                      
+                    }
+                    
+                    System.out.println("no thread: " + tipoMime);
+                    System.out.println("msg pre sleep");/*
+                    try
+                    {
+                         Thread.sleep ((int) (Math.random () * 20000));
+                     }
+                     catch (InterruptedException e)     {
+                       
+                     }*/
+                    System.out.println("msg pos sleep");
                   }
                 });
               
-              FileOutputStream fos = new FileOutputStream(new File("imagen.png"));
+              if (tipoMime == null){
+                System.out.println("Arquivo icompátivel");
+              } else {
+                th.start();
+              }
+              /* Criação do arquivo
+              FileOutputStream fos = new FileOutputStream(new File(nome_do_arquivo));
               fos.write(bits);
-              fos.close();
-              th.start();
+              fos.close();*/
+              //th.start();
+              
              // Path path = Paths.get(file.getAbsolutePath());
               //byte[] data = Files.readAllBytes(path);
               
+              break;
+            case "!local":
+              String dir = System.getProperty("user.dir");
+              System.out.println("Caminho atual é = " + dir);
               break;
             case "!listUsers":
               break;
