@@ -94,7 +94,7 @@ public class Chat {
           msgProto.Mensagem rec_mensagem =  msgProto.Mensagem.parseFrom(body);
           msgProto.Conteudo rec_conteudo = rec_mensagem.getConteudo();
           
-          System.out.println("RECEBIDA NA FILA _F");
+          //System.out.println("RECEBIDA NA FILA _F");
           String r_emissor = rec_mensagem.getEmissor();
           String r_data    = rec_mensagem.getData();
           String r_hora    = rec_mensagem.getHora();
@@ -145,7 +145,7 @@ public class Chat {
       
       switch (c){
         case "@" :
-          System.out.println("Caso @");
+          //System.out.println("Caso @");
           //sub = texto.substring(1,texto.length());
           Destino = texto.substring(1,texto.length());
           to_group = false;
@@ -153,40 +153,49 @@ public class Chat {
         case "#" :
           //Casos para o grupo
           //Verificar se o grupo existe e/ou se tem permissão para enviar mensagens?
-          System.out.println("Caso #");
+          //System.out.println("Caso #");
           Destino = texto.substring(1,texto.length());
           to_group = true;
           break;
         case "!" :
-          System.out.println("Caso !");
+          //System.out.println("Caso !");
           String[] corte = texto.split("\\s+");
           System.out.println(corte[0]);
           switch(corte[0]){
             case "!addGroup":
-              System.out.println("caso AddGroup");
+              //Formato: comando Nome_do_grupo
+              //System.out.println("caso AddGroup");
               //channel.exchangeDeclare("logs", "fanout");
-              System.out.println(corte[1]);
               channel.exchangeDeclare(corte[1], "fanout");
+              channel.exchangeDeclare(corte[1]+"_f", "fanout");
               //channel.queueBind(queueName, "logs", "");
               channel.queueBind(user,corte[1], "");
+              channel.queueBind(user+"_f",corte[1]+"_f", "");
               
               break;
             case "!addUser":
-              System.out.println("caso AddUser");
+              //Formato: comando Usuário Grupo
+              //System.out.println("caso AddUser");
               channel.queueBind(corte[1],corte[2], "");
+              channel.queueBind(corte[1]+"_f",corte[2]+"_f", "");
               
               break;
             case "!delFromGroup":
-              System.out.println("caso delFromGroup");
+              //Formato: comando Usuário Grupo
+              //System.out.println("caso delFromGroup");
               channel.queueUnbind(corte[1],corte[2], "");
+              channel.queueUnbind(corte[1]+"_f",corte[2]+"_f", "");
               
               break;
             case "!removeGroup":
-               System.out.println("caso removeGroup");
+              //Formato: comando nome_do_grupo
+               //System.out.println("caso removeGroup");
               channel.exchangeDelete(corte[1]);
+              channel.exchangeDelete(corte[1]+"_f");
               
               break;
             case "!upload":
+              //Formato: comando dirétorio_de_arquivo
               // caminhoAoArquivo = "/home/ubuntu/workspace/sistemas-distribuidos/Chat/arquivos/mistic.png"; 
               String caminhoAoArquivo = corte[1];
               String[] separador = caminhoAoArquivo.split("/");
@@ -199,14 +208,16 @@ public class Chat {
               
               //Criação de variaveis que vão guardar os valores para previnir a não alteração da váriavel principal
               //Date th_data = new Date();
-              String th_Destino = Destino+ "_f";
+              String th_Destino = Destino+"_f";
               String th_user = user;
               boolean th_toGroup = to_group;
+              if (th_toGroup){
+                System.out.println("[!]Enviando \""+ caminhoAoArquivo + "\" para #" + th_Destino + "[!]");
+              } else {
+                System.out.println("[!]Enviando \""+ caminhoAoArquivo + "\" para @" + th_Destino + "[!]");
+              }
               
-              
-              //DateFormat th_dia = new SimpleDateFormat("dd/MM/yyyy");
-              //DateFormat th_hora = new SimpleDateFormat("HH:mm:ss");
-              
+
               
               //Thread que vai fazer o envio do arquivo
               Thread th = new Thread(new Runnable() {
@@ -239,6 +250,10 @@ public class Chat {
                         byte[] th_buffer = th_mensagem.toByteArray();
                         
                         channel_f.basicPublish(th_Destino, "", null, th_buffer); 
+                        System.out.println("");
+                        System.out.println("[!]Arquivo \""+ caminhoAoArquivo + "\" foi enviado para #" + th_Destino + "[!]");
+                        System.out.print(Destino + ">> ");
+                        
                       
                       } else {
                         th_msg.setGrupo("");
@@ -247,38 +262,22 @@ public class Chat {
                         byte[] th_buffer = th_mensagem.toByteArray();
                         //channel.basicPublish("", Destino, null, txt.getBytes("UTF-8")); 
                         channel_f.basicPublish("", th_Destino, null, th_buffer); 
+                        System.out.println("");
+                        System.out.println("[!]Arquivo \""+ caminhoAoArquivo + "\" foi enviado para @" + th_Destino + "[!]");
+                        System.out.print(Destino + ">> ");
                       }
-                    } catch (IOException e){
                       
+                    } catch (IOException e){
                     }
-                    
-                    System.out.println("no thread: " + tipoMime);
-                    System.out.println("msg pre sleep");/*
-                    try
-                    {
-                         Thread.sleep ((int) (Math.random () * 20000));
-                     }
-                     catch (InterruptedException e)     {
-                       
-                     }*/
-                    System.out.println("msg pos sleep");
                   }
                 });
               
               if (tipoMime == null){
-                System.out.println("Arquivo icompátivel");
+                System.out.println("[!]       Arquivo Incompátivel      [!]");
               } else {
                 th.start();
               }
-              /* Criação do arquivo
-              FileOutputStream fos = new FileOutputStream(new File(nome_do_arquivo));
-              fos.write(bits);
-              fos.close();*/
-              //th.start();
-              
-             // Path path = Paths.get(file.getAbsolutePath());
-              //byte[] data = Files.readAllBytes(path);
-              
+
               break;
             case "!local":
               String dir = System.getProperty("user.dir");
@@ -290,12 +289,13 @@ public class Chat {
               break;
               
             default:
+              System.out.println("[!]       Comando Desconhecido       [!]");
               break;
           }
           break;
           
         default : //Aqui que a mensagem é enviada
-          System.out.println("Caso DEFAULT");
+          //System.out.println("Caso DEFAULT");
           Date data = new Date();
           /*Arquivos
           String caminhoAoArquivo = "/home/ubuntu/workspace/sistemas-distribuidos/Chat/arquivos/mistic.png"; 
