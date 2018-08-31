@@ -165,7 +165,7 @@ public class Chat {
           break;
         case "!" :
           String[] corte = texto.split("\\s+");
-          System.out.println(corte[0]);
+          //System.out.println(corte[0]);
           switch(corte[0]){
             case "!addGroup":
               //Formato: comando Nome_do_grupo
@@ -174,7 +174,7 @@ public class Chat {
               channel.exchangeDeclare(corte[1], "fanout");
               channel.exchangeDeclare(corte[1]+"_f", "fanout");
               
-              //Criando o Bindo entre o usuário e o Grupo
+              //Criando o Bind entre o usuário e o Grupo
               channel.queueBind(user,corte[1], "");
               channel.queueBind(user+"_f",corte[1]+"_f", "");
               
