@@ -22,6 +22,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import com.google.protobuf.util.JsonFormat;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import com.google.protobuf.ByteString;
 
 
@@ -289,9 +291,11 @@ public class Chat {
             case "!local":
               String dir = System.getProperty("user.dir");
               System.out.println("Caminho atual é = " + dir);
+              
               break;
             case "!listUsers":
-              System.out.println("listUsers: ");
+              //Comando Nome_do_grupo
+              //System.out.println("listUsers: ");
               try{
                 URL url = new URL ("http://ec2-54-200-22-72.us-west-2.compute.amazonaws.com:15672/api/exchanges/%2F/" 
                         +corte[1]+"/bindings/source?columns=destination");
@@ -302,10 +306,23 @@ public class Chat {
                 conn.setRequestProperty  ("Authorization", "Basic " + encoding);
                 InputStream content = (InputStream)conn.getInputStream();
                 BufferedReader in = new BufferedReader(new InputStreamReader(content));
-                String linha;
-                while ((linha = in.readLine()) != null) {
-                  System.out.println(linha);
+                //String linha;
+                String linha = in.readLine();
+                JSONArray jsonA = new JSONArray(linha);
+                //System.out.println(jsonA);
+                if (jsonA.length() > 0){
+                  //int n = jsonA.length();
+                  System.out.print("Membros do grupo " + corte[1] +": ");
+                  for (int i = 0; i < jsonA.length(); i++){
+                    JSONObject jsonO = jsonA.getJSONObject(i);
+                    String membro = jsonO.getString("destination");
+                    System.out.print(membro + ", ");
+                  }
+                  System.out.println("");
+                } else {
+                  System.out.println("[!] Grupo inexistente e/ou vazio     [!]");
                 }
+                
                 
               } catch (Exception e){
                 e.printStackTrace();
@@ -314,6 +331,43 @@ public class Chat {
               
               break;
             case "!listGroups":
+              
+              //URL curl -i -u accel:@Accel27 "ec2-54-200-22-72.us-west-2.compute.amazonaws.com:15672/api/queues/%2F/_maria_/bindings?columns=source"
+              
+              //Comando 
+              //System.out.println("listUsers: ");
+              try{
+                URL url = new URL ("http://ec2-54-200-22-72.us-west-2.compute.amazonaws.com:15672/api/queues/%2F/" 
+                        +user+"/bindings?columns=source");
+                String encoding = Base64.getEncoder().encodeToString(("accel:@Accel27").getBytes("UTF-8"));
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setDoOutput(true);
+                conn.setRequestProperty  ("Authorization", "Basic " + encoding);
+                InputStream content = (InputStream)conn.getInputStream();
+                BufferedReader in = new BufferedReader(new InputStreamReader(content));
+                //String linha;
+                String linha = in.readLine();
+                JSONArray jsonA = new JSONArray(linha);
+                //System.out.println(jsonA);
+                if (jsonA.length() > 1){
+                  //int n = jsonA.length();
+                  System.out.print("Voce está no(s) grupo(s):  ");
+                  for (int i = 1; i < jsonA.length(); i++){
+                    JSONObject jsonO = jsonA.getJSONObject(i);
+                    String membro = jsonO.getString("source");
+                    System.out.print(membro + ", ");
+                  }
+                  System.out.println("");
+                } else {
+                  System.out.println("[!] Voce não participa de grupos     [!]");
+                }
+                
+                
+              } catch (Exception e){
+                e.printStackTrace();
+              }
+              
               break;
               
             default:
